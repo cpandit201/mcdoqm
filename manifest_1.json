@@ -1,0 +1,22 @@
+{
+   "name": "Background",
+   "version": "1.0",
+   "content_scripts": [
+     {
+       "matches" : [
+         "<all_urls>"
+       ],
+       "js" : ["jquery.js","content.js"]
+     }
+   ],
+   "background": {
+      "scripts" : ["background.js"]
+   },
+   "browser_action": {
+      "default_icon" : "loginext-icon.png",
+      "default_popup" : "index.html",
+      "default_title" : "Loginext OD - OMQ",
+      "persistent": true
+   },
+   "manifest_version": 2
+ }
