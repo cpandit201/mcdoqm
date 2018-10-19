@@ -80,6 +80,12 @@ function testConnection() {
  */
 function loadOrder() {
   try {
+
+    if ((document.title == ("Order Queue Manager - Cash Memorandum")) == false) {
+      //alert("Unknown Page, please refer Invoice page to process data");
+      return;
+    }
+
     //Ask user to login if token is not setAttribute
 
     //Fetch Loginext API Tokens
@@ -105,6 +111,8 @@ function loadOrder() {
       console.log(items);
     });
 
+    var isOrderInformationComplete = true;
+
 
     //Add Order to Q
     var orderElement = getElementByXpath("//*[@class='orderDataTitle']//span[1]");
@@ -114,6 +122,9 @@ function loadOrder() {
     orderNumber = orderNumber.replace(new RegExp("-", 'g'), "_");
     orderNumber = orderNumber.replace(new RegExp("/", 'g'), "_");
     console.log("Fetched order : " + orderNumber);
+    if (orderNumber == "") {
+      isOrderInformationComplete = false;
+    }
 
     //Fetch its lat long co-ords
     var latLongs = getElementByXpath("//*[text()='Latitude / Longitude']//ancestor::tr[1]//td[@class='orderData2']//span"); // - //*[text()='Latitude / Longitude']//ancestor::tr[1]//td[@class="orderData2"]//span
@@ -131,23 +142,33 @@ function loadOrder() {
     } catch (err) {
       console.log("Unable to convert lat long will be zeroed to default..");
       log("Unable to convert lat long will be zeroed to default..");
+      isOrderInformationComplete = false;
     }
 
     //Get Customer Name - //Get Customer Name - //*[text()='Customer']//ancestor::tr[1]//td[@class="orderData4"]//span[1]
     var custName = getElementByXpath("//*[text()='Customer']//ancestor::tr[1]//td[@class='orderData4']//span[1]");
     var custText = custName.innerText;
     console.log("Fetched Customer Name : " + custText);
+    if (custText == "") {
+      isOrderInformationComplete = false;
+    }
 
     //Fetch Customer Address
     var address = getElementByXpath("//*[text()='Address']//ancestor::tr[1]//td[@class='orderData2']//span"); // - //*[text()='Address']//ancestor::tr[1]//td[@class=\"orderData2\"]
     //console.log ("Fetch address : "+ address);
     var addressText = address.innerHTML;
     console.log("Fetched addressText : " + addressText);
+    if (addressText == "") {
+      isOrderInformationComplete = false;
+    }
 
     //Get Total after rounding - //*[text()='Total After Rounding']//ancestor::tr[1]//td[@class='orderItemsTotal5']//span
     var totalAfterRoundingElem = getElementByXpath("//*[text()='Total After Rounding']//ancestor::tr[1]//td[@class='orderItemsTotal5']//span");
     var totalAfterRoundingText = totalAfterRoundingElem.innerText;
     console.log("Fetched total after rounding : " + totalAfterRoundingText);
+    if (totalAfterRoundingText == "") {
+      isOrderInformationComplete = false;
+    }
 
     //Get Branch  - //*[@class='mcdeliveryLogo']//ancestor::tr[1]//td[@valign="middle"]//span[1]
     var branchElem = getElementByXpath("//*[@class='mcdeliveryLogo']//ancestor::tr[1]//td[@valign='middle']//span[1]"); // //*[@class='mcdeliveryLogo']//ancestor::tr[1]//td[@valign="middle"]//span[1]
@@ -157,6 +178,9 @@ function loadOrder() {
     var phoneNumberElem = getElementByXpath("//*[text()='Phone No']//ancestor::tr[1]//td[@class='orderData2']//span[1]"); //  // - //*[text()='Phone No']//ancestor::tr[1]//td[@class='orderData2']//span
     var phoneNumberText = phoneNumberElem.innerText;
     console.log('Phone number : ' + phoneNumberText);
+    if (phoneNumberText == "") {
+      isOrderInformationComplete = false;
+    }
 
     if (phoneNumberText.length > 10) {
       phoneNumberText = phoneNumberText.substring(0, 10);
@@ -199,7 +223,7 @@ function loadOrder() {
     //McD Order Invoice should have a hidden element of id = __VIEWSTATEGENERATOR
     //if (document.getElementById("__VIEWSTATEGENERATOR") == null) {
     if ((document.title == ("Order Queue Manager - Cash Memorandum")) == false) {
-      alert("Unknown Page, please refer Invoice page to process data");
+      //alert("Unknown Page, please refer Invoice page to process data");
       return;
     }
 
@@ -237,77 +261,81 @@ function loadOrder() {
 
     console.log("Auth Tokens : " + wwwAuthToken + "," + clientSecretKey);
 
-    //Get Branch Data for that user from - https://cpandit201.github.io/mcdoqm/branch.json
-    $.ajax({
-      url: "https://cpandit201.github.io/mcdoqm/branch.json",
-      type: 'GET',
-      contentType: "application/json",
-      dataType: 'json',
-      beforeSend: function() {
-        //log ("Loading...");
-      },
-      success: function(data) {
-        try {
-          if (data.length > 0) {
-            log("Branch Data fetched");
-            var isBranchFound = false;
-            for (var i = 0; i < data.length; i++) {
-              var currentConfig = data[i];
-              if (currentConfig.user == userName_storeOwner) {
-                isBranchFound = true;
+    if (isOrderInformationComplete == true) {
 
-                //branch -
-                var userBranch = currentConfig.branch;
+      //Get Branch Data for that user from - https://cpandit201.github.io/mcdoqm/branch.json
+      $.ajax({
+        url: "https://cpandit201.github.io/mcdoqm/branch.json",
+        type: 'GET',
+        contentType: "application/json",
+        dataType: 'json',
+        beforeSend: function() {
+          //log ("Loading...");
+        },
+        success: function(data) {
+          try {
+            if (data.length > 0) {
+              log("Branch Data fetched");
+              var isBranchFound = false;
+              for (var i = 0; i < data.length; i++) {
+                var currentConfig = data[i];
+                if (currentConfig.user == userName_storeOwner) {
+                  isBranchFound = true;
 
-                //Load Order
-                log("Adding Order, Please wait..");
-                addOrderToLoginext(
-                  orderNumber,
-                  totalAfterRoundingText,
-                  custText,
-                  addressText,
-                  phoneNumberText,
-                  orderNumber,
-                  userBranch,
-                  num_lat,
-                  num_long
-                );
-                //Load Order End
-                break;
+                  //branch -
+                  var userBranch = currentConfig.branch;
+
+                  //Load Order
+                  log("Adding Order, Please wait..");
+                  addOrderToLoginext(
+                    orderNumber,
+                    totalAfterRoundingText,
+                    custText,
+                    addressText,
+                    phoneNumberText,
+                    orderNumber,
+                    userBranch,
+                    num_lat,
+                    num_long
+                  );
+                  //Load Order End
+                  break;
+                }
+
+              } //For loop end
+
+              //If branch data is not found.. inform user that branch for this user name does not exists in configuration
+              if (isBranchFound == false) {
+                if (isLoggedIn === false) {
+                  log("Please login to Loginext Chrome Extension");
+                } else {
+                  log("Store does not exist in the LogiNext application. Please add the Store first. Store Username : " + userName_storeOwner + "");
+                }
               }
 
-            } //For loop end
-
-            //If branch data is not found.. inform user that branch for this user name does not exists in configuration
-            if (isBranchFound == false) {
-              if (isLoggedIn === false) {
-                log("Please login to Loginext Chrome Extension");
-              }
-              else {
-                log("Store does not exist in the LogiNext application. Please add the Store first. Store Username : " + userName_storeOwner + "");
-              }
+            } else {
+              log("No Branch Data fetched");
             }
-
-          } else {
-            log("No Branch Data fetched");
+          } catch (err) {
+            log("Error in parsing response output.");
           }
-        } catch (err) {
-          log("Error in parsing response output.");
+          //console.info(data);
+        },
+        error: function(xhr) {
+          if (xhr.status === 401) {
+            log("Please login from Loginext Chrome Extension");
+          } else if (xhr.status === 403) {
+            log("Access denied to Loginext, Please contact support");
+          } else {
+            log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
+            log("Cannot process this order now. Please try after some time");//Cannot process this order now. Please try after some time
+          }
         }
-        //console.info(data);
-      },
-      error: function(xhr) {
-        if (xhr.status=== 401) {
-          log("Please login from Loginext Chrome Extension");
-        }
-        else if (xhr.status=== 403) {
-          log("Access denied to Loginext, Please contact support");
-        }
-        else {
-          log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
-        }
-      }
-    });
+      });
+    } else {
+      //Order Mandatory fields were not found
+      log("The order information is incomplete. Please add this order manually in the LogiNext application");
+    }
   } catch (err) {
     //alert("Unknown page please refer Order Invoice Page to process data...");
     console.log("Current page is not order invoice ");
@@ -361,18 +389,19 @@ function addOrderToLoginext(
     success: function(data) {
       try {
         if (data.status === 200 && data.message === "Success") {
-          log("Added order " + orderNumber + " in Loginext");
+          log("Order '" + orderNumber + "' Successfully transferred to LogiNext"); //Order Successfully transferred to LogiNext//log("Added order " + orderNumber + " in Loginext");
         } else {
           var errorOutput = JSON.stringify(data);
-
           if (errorOutput.includes("orders are duplicate")) {
             log("This order  : '" + orderNumber + "' has already been added to LogiNext application ");
           } else if (errorOutput.includes("Not a valid mobile number")) {
-            log("Cannot Add, Order number : '" + orderNumber + "' Not a valid mobile number");
+            log("Cannot Add Order : '" + orderNumber + "' Not a valid mobile number");
           }
           //branches does not exist
           else if (errorOutput.includes("branches does not exist")) {
-            log("Cannot Add Order, Branch '" + userBranch + "' does not exists in loginext, Please contact support");
+            log("Invalid Store. Please contact LogiNext support - support@loginextsolutison.com"); //Invalid Store. Please contact LogiNext support - support@loginextsolutison.com //log("Cannot Add Order, Branch '" + userBranch + "' does not exists in loginext, Please contact support");
+            //log("Store does not exist in the LogiNext application. Please add the Store first. Store Username : " + userName_storeOwner + "");
+
           } else {
             //log(data.status + " : " + data.message + "\n "+ errorOutput);
             log(data.status + " \n Error Json : " + errorOutput);
@@ -386,15 +415,14 @@ function addOrderToLoginext(
     },
     error: function(xhr) {
 
-        if (xhr.status=== 401) {
-          log("Please login from Loginext Chrome Extension");
-        }
-        else if (xhr.status=== 403) {
-          log("Access denied to Loginext, Please contact support");
-        }
-        else {
-          log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
-        }
+      if (xhr.status === 401) {
+        log("Please login from Loginext Chrome Extension");
+      } else if (xhr.status === 403) {
+        log("Access denied to Loginext, Please contact support");
+      } else {
+        log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
+        log("Cannot process this order now. Please try after some time");
+      }
     }
   });
 
@@ -525,15 +553,14 @@ function cancelOrder() {
       },
       error: function(xhr) {
 
-          if (xhr.status=== 401) {
-            log("Please login from Loginext Chrome Extension");
-          }
-          else if (xhr.status=== 403) {
-            log("Access denied to Loginext, Please contact support");
-          }
-          else {
-            log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
-          }
+        if (xhr.status === 401) {
+          log("Please login from Loginext Chrome Extension");
+        } else if (xhr.status === 403) {
+          log("Access denied to Loginext, Please contact support");
+        } else {
+          log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
+          log("Cannot process this order now. Please try after some time");
+        }
       }
     });
 
@@ -571,7 +598,13 @@ var getOrderShipmentID = function getOrderShipmentID(orderData, expectedOrderNum
 var cancelShipmentID = function cancelShipmentID(shipmentId, strOrderNumber, jsonShipmentData) {
 
   //if order status is among these - should be allowed to cancel - NOTDISPATCHED / INTRANSIT / PICKEDUP / NOTDELIVERED (Attempted Delivered) / NOTPICKEDUP (Attempted Pickup)
-  if (jsonShipmentData.status == "NOTDISPATCHED" ||
+
+  //Check  IF order is already marked delivered in loginext - if so do not cancel this order
+  if (jsonShipmentData.status == "DELIVERED"){
+    log("Order '" + strOrderNumber + "'  is already delivered. Cannot Cancel the order."); //Order is already in cancelled status //log("Unable to cancel order : " + strOrderNumber + "\n Order Status is already : " + jsonShipmentData.status + " in Loginext.");
+    return false;
+  }
+  else if (jsonShipmentData.status == "NOTDISPATCHED" ||
     jsonShipmentData.status == "INTRANSIT" ||
     jsonShipmentData.status == "PICKEDUP" ||
     jsonShipmentData.status == "NOTDELIVERED" ||
@@ -602,11 +635,12 @@ var cancelShipmentID = function cancelShipmentID(shipmentId, strOrderNumber, jso
       success: function(data) {
         try {
           if (data.status === 200 && data.data === "Order(s) cancelled successfully") {
-            log("Canceled order : " + strOrderNumber + " in Loginext\n" + "RefID " + shipmentId);
+            log("Order  " + strOrderNumber + " cancelled successfully"); //log("Canceled order : " + strOrderNumber + " in Loginext\n" + "RefID " + shipmentId);
             rc = true;
           } else {
             var errorOutput = JSON.stringify(data);
             log(data.status + " \n Error Json : " + errorOutput);
+            log("Cannot process this order cancellation now. Please try after some time"); //log("Canceled order : " + strOrderNumber + " in Loginext\n" + "RefID " + shipmentId);
             rc = false;
           }
         } catch (err) {
@@ -615,26 +649,24 @@ var cancelShipmentID = function cancelShipmentID(shipmentId, strOrderNumber, jso
         }
       },
       error: function(xhr) {
-
-          if (xhr.status=== 401) {
-            log("Please login from Loginext Chrome Extension");
-          }
-          else if (xhr.status=== 403) {
-            log("Access denied to Loginext, Please contact support");
-          }
-          else {
-            log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
-          }
-
+        if (xhr.status === 401) {
+          log("Please login from Loginext Chrome Extension");
+        } else if (xhr.status === 403) {
+          log("Access denied to Loginext, Please contact support");
+        } else {
+          log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
+          log("Cannot process this order cancellation now. Please try after some time");
+        }
         rc = false;
       }
     });
     return rc;
   } else if (jsonShipmentData.status == "CANCELLED") {
-    log("Unable to cancel order : " + strOrderNumber + "\n Order Status is already : " + jsonShipmentData.status + " in Loginext.");
+    log("Order '" + strOrderNumber + "' is already in cancelled status."); //Order is already in cancelled status //log("Unable to cancel order : " + strOrderNumber + "\n Order Status is already : " + jsonShipmentData.status + " in Loginext.");
     return false;
   } else {
     log("Unable to cancel order : " + strOrderNumber + "\n Order Status is : " + jsonShipmentData.status + " in Loginext \nOnly Orders will be cancelled having statuses (NOTDISPATCHED / INTRANSIT / PICKEDUP / NOTDELIVERED (Attempted Delivered) / NOTPICKEDUP (Attempted Pickup)).");
+    log("Cannot process this order cancellation now. Please try after some time");
     return false;
   }
 }
