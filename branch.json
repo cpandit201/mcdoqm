@@ -9,5 +9,9 @@
   {
     "user": "testing1@loginextsolutions.com",
     "branch": "Test Automation FMLM Main Branch"
+  },
+  {
+    "user": "testing7@loginextsolutions.com",
+    "branch": "OnDemandDemoBranch"
   }
 ]

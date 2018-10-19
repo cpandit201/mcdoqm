@@ -25,7 +25,7 @@ $(document).bind('keypress', function(event) {
 chrome.storage.sync.get(["Authenticate"], function(items) {
   console.log("Authenticate key");
   if (typeof items.Authenticate === "undefined") {
-    alert("Please Login to Loginext by clicking Loginext icon on top right");
+    //alert("Please Login to Loginext by clicking Loginext icon on top right");
   } else {
     console.log("Setting Auth Key to " + items.Authenticate);
     wwwAuthToken = items.Authenticate;
@@ -89,6 +89,7 @@ function loadOrder() {
       console.log("Authenticate key");
       if (typeof items.Authenticate === "undefined") {
         alert("Please Login to Loginext by clicking Loginext icon on top right");
+        return;
       } else {
         console.log("Setting Auth Key to " + items.Authenticate);
         wwwAuthToken = items.Authenticate;
@@ -165,13 +166,15 @@ function loadOrder() {
 
     //Fetch Loginext API Tokens
     //Get User Access Token
+    var isLoggedIn = false;
     chrome.storage.sync.get(["Authenticate"], function(items) {
       console.log("Authenticate key");
       if (typeof items.Authenticate === "undefined") {
-        alert("Please Login to Loginext by clicking Loginext icon on top right");
+        //alert("Please Login to Loginext by clicking Loginext icon on top right");
       } else {
         console.log("Setting Auth Key to " + items.Authenticate);
         wwwAuthToken = items.Authenticate;
+        isLoggedIn = true;
       }
       //console.log (items.Authenticate);
       //console.log(items);
@@ -259,7 +262,7 @@ function loadOrder() {
 
                 //Load Order
                 log("Adding Order, Please wait..");
-                addOrderToLoginext (
+                addOrderToLoginext(
                   orderNumber,
                   totalAfterRoundingText,
                   custText,
@@ -278,7 +281,12 @@ function loadOrder() {
 
             //If branch data is not found.. inform user that branch for this user name does not exists in configuration
             if (isBranchFound == false) {
-              log("Branch Data for username : " + userName_storeOwner + " is not fetched, Please contact support to add your branch configuration");
+              if (isLoggedIn === false) {
+                log("Please login to Loginext Chrome Extension");
+              }
+              else {
+                log("Branch Data for username : " + userName_storeOwner + " is not fetched, Please contact support to add your branch configuration");
+              }
             }
 
           } else {
@@ -290,7 +298,12 @@ function loadOrder() {
         //console.info(data);
       },
       error: function(xhr) {
-        log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
+        if (xhr.status=== 401) {
+          log("Please login from Loginext Chrome Extension");
+        }
+        else {
+          log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
+        }
       }
     });
   } catch (err) {
@@ -302,7 +315,7 @@ function loadOrder() {
 }
 
 
-function addOrderToLoginext (
+function addOrderToLoginext(
   orderNumber,
   totalAfterRoundingText,
   custText,
@@ -312,67 +325,72 @@ function addOrderToLoginext (
   userBranch,
   num_lat,
   num_long
-){
+) {
 
-                  //Call Loginext OD Add Order API
-                  $.ajax({
-                    url: "https://products.loginextsolutions.com/ShipmentApp/ondemand/v1/create",
-                    type: 'post',
-                    contentType: "application/json",
-                    data: JSON.stringify(
-                      [{
-                        "cashOnDelivery": totalAfterRoundingText,
-                        "customerName": custText,
-                        //"locality": "McD Malaysia",
-                        //"subLocality": "Petaling Jaya",
-                        "address": addressText,
-                        "deliverPhoneNumber": phoneNumberText,
-                        "orderNo": orderNumber,
-                        "distributionCenter": userBranch,
-                        "paymentType": "COD",
-                        "latitude": num_lat, //31.1370445,
-                        "longitude": num_long //80.6210216
-                      }]
-                    ),
-                    headers: {
-                      "WWW-Authenticate": wwwAuthToken,
-                      "CLIENT_SECRET_KEY": clientSecretKey, //'key', //If your header name has spaces or any other char not appropriate
-                      "Content-Type": 'application/json' //for object property name, use quoted notation shown in second
-                    },
-                    dataType: 'json',
-                    beforeSend: function() {
-                      //log ("Loading...");
-                    },
-                    success: function(data) {
-                      try {
-                        if (data.status === 200 && data.message === "Success") {
-                          log("Added order " + orderNumber + " in Loginext");
-                        } else {
-                          var errorOutput = JSON.stringify(data);
+  //Call Loginext OD Add Order API
+  $.ajax({
+    url: "https://products.loginextsolutions.com/ShipmentApp/ondemand/v1/create",
+    type: 'post',
+    contentType: "application/json",
+    data: JSON.stringify(
+      [{
+        "cashOnDelivery": totalAfterRoundingText,
+        "customerName": custText,
+        //"locality": "McD Malaysia",
+        //"subLocality": "Petaling Jaya",
+        "address": addressText,
+        "deliverPhoneNumber": phoneNumberText,
+        "orderNo": orderNumber,
+        "distributionCenter": userBranch,
+        "paymentType": "COD",
+        "latitude": num_lat, //31.1370445,
+        "longitude": num_long //80.6210216
+      }]
+    ),
+    headers: {
+      "WWW-Authenticate": wwwAuthToken,
+      "CLIENT_SECRET_KEY": clientSecretKey, //'key', //If your header name has spaces or any other char not appropriate
+      "Content-Type": 'application/json' //for object property name, use quoted notation shown in second
+    },
+    dataType: 'json',
+    beforeSend: function() {
+      //log ("Loading...");
+    },
+    success: function(data) {
+      try {
+        if (data.status === 200 && data.message === "Success") {
+          log("Added order " + orderNumber + " in Loginext");
+        } else {
+          var errorOutput = JSON.stringify(data);
 
-                          if (errorOutput.includes("orders are duplicate")) {
-                            log("Cannot Add, Order number : '" + orderNumber + "' is duplicate present in loginext");
-                          } else if (errorOutput.includes("Not a valid mobile number")) {
-                            log("Cannot Add, Order number : '" + orderNumber + "' Not a valid mobile number");
-                          }
-                          //branches does not exist
-                          else if (errorOutput.includes("branches does not exist")) {
-                            log("Cannot Add Order, Branch '" + userBranch + "' does not exists in loginext, Please contact support");
-                          } else {
-                            //log(data.status + " : " + data.message + "\n "+ errorOutput);
-                            log(data.status + " \n Error Json : " + errorOutput);
-                            log("Unable to add order in loginext, Please contact support");
-                          }
-                        }
-                      } catch (err) {
-                        log("Error in parsing response output.");
-                      }
-                      //console.info(data);
-                    },
-                    error: function(xhr) {
-                      log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
-                    }
-                  });
+          if (errorOutput.includes("orders are duplicate")) {
+            log("Cannot Add, Order number : '" + orderNumber + "' is duplicate present in loginext");
+          } else if (errorOutput.includes("Not a valid mobile number")) {
+            log("Cannot Add, Order number : '" + orderNumber + "' Not a valid mobile number");
+          }
+          //branches does not exist
+          else if (errorOutput.includes("branches does not exist")) {
+            log("Cannot Add Order, Branch '" + userBranch + "' does not exists in loginext, Please contact support");
+          } else {
+            //log(data.status + " : " + data.message + "\n "+ errorOutput);
+            log(data.status + " \n Error Json : " + errorOutput);
+            log("Unable to add order in loginext, Please contact support");
+          }
+        }
+      } catch (err) {
+        log("Error in parsing response output.");
+      }
+      //console.info(data);
+    },
+    error: function(xhr) {
+      if (xhr.status=== 401) {
+        log("Please login from Loginext Chrome Extension");
+      }
+      else {
+        log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
+      }
+    }
+  });
 
 }
 
@@ -489,7 +507,8 @@ function cancelOrder() {
             } else {
               log("Cannot cancel - Order is not present in Loginext");
             }
-
+          } else if (data.status === 401 && data.message === "Invalid token") {
+            log("Please login from Loginext Chrome Extension");
           } else {
             var errorOutput = JSON.stringify(data);
             log(data.status + " \n Error Json : " + errorOutput);
@@ -499,7 +518,12 @@ function cancelOrder() {
         }
       },
       error: function(xhr) {
-        log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
+        if (xhr.status=== 401) {
+          log("Please login from Loginext Chrome Extension");
+        }
+        else {
+          log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
+        }
       }
     });
 
@@ -581,7 +605,13 @@ var cancelShipmentID = function cancelShipmentID(shipmentId, strOrderNumber, jso
         }
       },
       error: function(xhr) {
-        log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
+        if (xhr.status=== 401) {
+          log("Please login from Loginext Chrome Extension");
+        }
+        else {
+          log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
+        }
+
         rc = false;
       }
     });
