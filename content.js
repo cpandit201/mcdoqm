@@ -284,7 +284,7 @@ function loadOrder() {
                 log("Please login to Loginext Chrome Extension");
               }
               else {
-                log("Branch Data for username : " + userName_storeOwner + " is not fetched, Please contact support to add your branch configuration");
+                log("Store does not exist in the LogiNext application. Please add the Store first. Store Username : " + userName_storeOwner + "");
               }
             }
 
@@ -366,7 +366,7 @@ function addOrderToLoginext(
           var errorOutput = JSON.stringify(data);
 
           if (errorOutput.includes("orders are duplicate")) {
-            log("Cannot Add, Order number : '" + orderNumber + "' is duplicate present in loginext");
+            log("This order  : '" + orderNumber + "' has already been added to LogiNext application ");
           } else if (errorOutput.includes("Not a valid mobile number")) {
             log("Cannot Add, Order number : '" + orderNumber + "' Not a valid mobile number");
           }
