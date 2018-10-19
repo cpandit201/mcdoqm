@@ -1,6 +1,6 @@
 {
    "name": "Loginext",
-   "version": "1.03",
+   "version": "1.04",
    "content_scripts": [
      {
        "matches" : [

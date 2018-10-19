@@ -328,7 +328,7 @@ function loadOrder() {
             log("Access denied to Loginext, Please contact support");
           } else {
             log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
-            log("Cannot process this order now. Please try after some time");//Cannot process this order now. Please try after some time
+            log("Cannot process this order now. Please try after some time"); //Cannot process this order now. Please try after some time
           }
         }
       });
@@ -433,6 +433,12 @@ function addOrderToLoginext(
  */
 function cancelOrder() {
   try {
+
+
+    if ((document.title == ("Order Queue Manager - Cash Memorandum")) == false) {
+      //alert("Unknown Page, please refer Invoice page to process data");
+      return;
+    }
     //Ask user to login if token is not setAttribute
 
     //Fetch Loginext API Tokens
@@ -600,11 +606,10 @@ var cancelShipmentID = function cancelShipmentID(shipmentId, strOrderNumber, jso
   //if order status is among these - should be allowed to cancel - NOTDISPATCHED / INTRANSIT / PICKEDUP / NOTDELIVERED (Attempted Delivered) / NOTPICKEDUP (Attempted Pickup)
 
   //Check  IF order is already marked delivered in loginext - if so do not cancel this order
-  if (jsonShipmentData.status == "DELIVERED"){
+  if (jsonShipmentData.status == "DELIVERED") {
     log("Order '" + strOrderNumber + "'  is already delivered. Cannot Cancel the order."); //Order is already in cancelled status //log("Unable to cancel order : " + strOrderNumber + "\n Order Status is already : " + jsonShipmentData.status + " in Loginext.");
     return false;
-  }
-  else if (jsonShipmentData.status == "NOTDISPATCHED" ||
+  } else if (jsonShipmentData.status == "NOTDISPATCHED" ||
     jsonShipmentData.status == "INTRANSIT" ||
     jsonShipmentData.status == "PICKEDUP" ||
     jsonShipmentData.status == "NOTDELIVERED" ||
