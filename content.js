@@ -4,18 +4,17 @@ console.log("Ready to go...");
 var wwwAuthToken = "";
 var clientSecretKey = "";
 
+
 $(document).bind('keypress', function(event) {
 
   //When 'Shift + L' is pressed - Call Loginext Load Order
   if (event.shiftKey && event.which === 76) { //Ascii code for 'L'
-
     testConnection();
     loadOrder();
   }
 
   //When 'Shift + C' is pressed - Call Loginext Cancel Order API
   if (event.shiftKey && event.which === 67) { //Ascii code for 'C'
-
     testConnection();
     cancelOrder();
   }
@@ -69,7 +68,7 @@ function testConnection() {
         alert('Unable to reach products.loginextsolutions.com!');
       },
       0: function(response) {
-        alert('Unable to reach products.loginextsolutions.com!');
+        //alert('Unable to reach products.loginextsolutions.com!');
       }
     }
   });
@@ -301,6 +300,9 @@ function loadOrder() {
         if (xhr.status=== 401) {
           log("Please login from Loginext Chrome Extension");
         }
+        else if (xhr.status=== 403) {
+          log("Access denied to Loginext, Please contact support");
+        }
         else {
           log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
         }
@@ -383,12 +385,16 @@ function addOrderToLoginext(
       //console.info(data);
     },
     error: function(xhr) {
-      if (xhr.status=== 401) {
-        log("Please login from Loginext Chrome Extension");
-      }
-      else {
-        log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
-      }
+
+        if (xhr.status=== 401) {
+          log("Please login from Loginext Chrome Extension");
+        }
+        else if (xhr.status=== 403) {
+          log("Access denied to Loginext, Please contact support");
+        }
+        else {
+          log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
+        }
     }
   });
 
@@ -518,12 +524,16 @@ function cancelOrder() {
         }
       },
       error: function(xhr) {
-        if (xhr.status=== 401) {
-          log("Please login from Loginext Chrome Extension");
-        }
-        else {
-          log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
-        }
+
+          if (xhr.status=== 401) {
+            log("Please login from Loginext Chrome Extension");
+          }
+          else if (xhr.status=== 403) {
+            log("Access denied to Loginext, Please contact support");
+          }
+          else {
+            log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
+          }
       }
     });
 
@@ -605,12 +615,16 @@ var cancelShipmentID = function cancelShipmentID(shipmentId, strOrderNumber, jso
         }
       },
       error: function(xhr) {
-        if (xhr.status=== 401) {
-          log("Please login from Loginext Chrome Extension");
-        }
-        else {
-          log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
-        }
+
+          if (xhr.status=== 401) {
+            log("Please login from Loginext Chrome Extension");
+          }
+          else if (xhr.status=== 403) {
+            log("Access denied to Loginext, Please contact support");
+          }
+          else {
+            log("An error occured: " + xhr.status + " " + xhr.statusText + "<br/> " + JSON.stringify(xhr));
+          }
 
         rc = false;
       }
