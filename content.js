@@ -263,9 +263,9 @@ function loadOrder() {
 
     if (isOrderInformationComplete == true) {
 
-      //Get Branch Data for that user from - https://cpandit201.github.io/mcdoqm/branch.json
+      //Get Branch Data for that user from - https://demo.loginextsolutions.com/mcdoqm/branch.json
       $.ajax({
-        url: "https://cpandit201.github.io/mcdoqm/branch.json",
+        url: "https://demo.loginextsolutions.com/mcdoqm/branch.json",
         type: 'GET',
         contentType: "application/json",
         dataType: 'json',

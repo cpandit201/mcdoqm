@@ -92,35 +92,3 @@ function authenticateLoginext() {
   //alert("Loaded..!");
 
 }
-
-/**
-$('#loginButton').click (function (){
-  alert("loaded..");
-});
-*/
-
-//  PERSISTENT Storage - Globally
-//  Save data to storage across their browsers...
-/*
-chrome.storage.sync.set({ "yourBody": "myBody" }, function(){
-    //  A data saved callback omg so fancy
-});
-
-
-chrome.storage.sync.get(["yourBody"], function(items){
-    //  items = [ { "yourBody": "myBody" } ]
-});
-*/
-/*
-chrome.browserAction.onClicked.addListener(clickedBackgroundScript);
-
-function clickedBackgroundScript (tab){
-  console.log("Sending Message to contentscript on tab - "+tab);
-
-  //Message
-  var messageObj = {
-    messageString : "My Message"
-  }
-  chrome.tabs.sendMessage (tab.id, messageObj);
-}
-*/
